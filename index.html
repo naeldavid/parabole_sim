@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur de Parabole</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for number inputs to remove arrows on some browsers */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4 max-w-4xl">
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">Simulateur de Parabole</h1>
+            <p class="text-center text-gray-600 mb-6">Change les valeurs de `a`, `b`, et `c` pour voir comment la courbe `y = ax² + bx + c` évolue.</p>
+
+            <!-- Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="flex flex-col">
+                    <label for="a-slider" class="text-lg font-medium text-center mb-2">Valeur de <span class="font-bold text-red-500">a</span></label>
+                    <input type="range" id="a-slider" min="-5" max="5" value="1" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2">
+                    <input type="number" id="a-input" min="-5" max="5" value="1" step="0.1" class="w-full p-2 border rounded-md text-center font-bold text-red-500 bg-white">
+                </div>
+                <div class="flex flex-col">
+                    <label for="b-slider" class="text-lg font-medium text-center mb-2">Valeur de <span class="font-bold text-green-500">b</span></label>
+                    <input type="range" id="b-slider" min="-10" max="10" value="-5" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2">
+                    <input type="number" id="b-input" min="-10" max="10" value="-5" step="0.1" class="w-full p-2 border rounded-md text-center font-bold text-green-500 bg-white">
+                </div>
+                <div class="flex flex-col">
+                    <label for="c-slider" class="text-lg font-medium text-center mb-2">Valeur de <span class="font-bold text-blue-500">c</span></label>
+                    <input type="range" id="c-slider" min="-10" max="10" value="6" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2">
+                    <input type="number" id="c-input" min="-10" max="10" value="6" step="0.1" class="w-full p-2 border rounded-md text-center font-bold text-blue-500 bg-white">
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="relative">
+                 <canvas id="parabolaChart"></canvas>
+            </div>
+            
+            <!-- Info Box -->
+            <div id="info-box" class="mt-6 p-4 bg-gray-100 rounded-lg text-center">
+                <p class="text-lg font-medium">Informations</p>
+                <p id="delta-info" class="text-md text-gray-700 mt-2"></p>
+                <p id="solutions-info" class="text-md text-gray-700 mt-1"></p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Get elements for a, b, c
+        const aSlider = document.getElementById('a-slider');
+        const aInput = document.getElementById('a-input');
+        const bSlider = document.getElementById('b-slider');
+        const bInput = document.getElementById('b-input');
+        const cSlider = document.getElementById('c-slider');
+        const cInput = document.getElementById('c-input');
+        
+        const deltaInfo = document.getElementById('delta-info');
+        const solutionsInfo = document.getElementById('solutions-info');
+
+        const ctx = document.getElementById('parabolaChart').getContext('2d');
+        let chart;
+
+        function syncInputs(slider, input) {
+            // Sync slider to input
+            slider.addEventListener('input', (e) => {
+                input.value = e.target.value;
+                drawChart();
+            });
+            // Sync input to slider
+            input.addEventListener('input', (e) => {
+                // Handle cases where the input is empty or invalid
+                let value = parseFloat(e.target.value);
+                if (isNaN(value) || e.target.value === '') {
+                    // Don't update slider if input is invalid/empty, but maybe clear chart or show message
+                    return;
+                }
+                slider.value = value;
+                drawChart();
+            });
+        }
+
+        syncInputs(aSlider, aInput);
+        syncInputs(bSlider, bInput);
+        syncInputs(cSlider, cInput);
+
+        function drawChart() {
+            const a = parseFloat(aInput.value);
+            const b = parseFloat(bInput.value);
+            const c = parseFloat(cInput.value);
+
+            // If any value is not a number, don't draw
+            if (isNaN(a) || isNaN(b) || isNaN(c)) {
+                if(chart) chart.clear();
+                return;
+            }
+
+            // Prevent 'a' from being exactly zero for a parabola
+            if (a === 0) {
+                 if(chart) chart.clear();
+                 deltaInfo.textContent = "Le paramètre 'a' ne peut pas être zéro.";
+                 solutionsInfo.textContent = "";
+                 return;
+            }
+
+            const data = {
+                labels: [],
+                datasets: [{
+                    label: 'Parabole y = ax² + bx + c',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    pointRadius: 0,
+                    fill: false
+                }, {
+                    label: 'Trésors (Solutions)',
+                    data: [],
+                    backgroundColor: '#ef4444',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    type: 'scatter'
+                }]
+            };
+
+            const xMin = -10, xMax = 10, step = 0.25;
+            for (let x = xMin; x <= xMax; x += step) {
+                data.labels.push(x.toFixed(2));
+                data.datasets[0].data.push(a * x * x + b * x + c);
+            }
+
+            const delta = b * b - 4 * a * c;
+            const solutions = [];
+
+            deltaInfo.textContent = `Discriminant Δ = ${delta.toFixed(2)}`;
+
+            if (delta > 0) {
+                const x1 = (-b - Math.sqrt(delta)) / (2 * a);
+                const x2 = (-b + Math.sqrt(delta)) / (2 * a);
+                solutions.push({x: x1, y: 0}, {x: x2, y: 0});
+                solutionsInfo.textContent = `Deux trésors trouvés : x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
+            } else if (delta === 0) {
+                const x0 = -b / (2 * a);
+                solutions.push({x: x0, y: 0});
+                solutionsInfo.textContent = `Un seul trésor trouvé : x₀ = ${x0.toFixed(2)}`;
+            } else {
+                solutionsInfo.textContent = "Aucun trésor (la courbe ne coupe pas l'axe horizontal).";
+            }
+            
+            data.datasets[1].data = solutions;
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: '#e5e7eb' }
+                        },
+                        x: {
+                            grid: { color: '#e5e7eb' },
+                            ticks: { maxTicksLimit: 10 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Initial draw
+        drawChart();
+    </script>
+</body>
+</html>
