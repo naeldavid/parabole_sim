@@ -1,0 +1,106 @@
+{
+  "app": {
+    "title": "Parabola Simulator",
+    "description": "Change the values of `a`, `b`, and `c` to see how the curve evolves.",
+    "defaultValues": {
+      "a": 1,
+      "b": -5,
+      "c": 6
+    }
+  },
+  "presets": [
+    {
+      "name": "Basic: y = x²",
+      "values": [1, 0, 0],
+      "description": "Simple parabola opening upward"
+    },
+    {
+      "name": "Inverted: y = -x²",
+      "values": [-1, 0, 0],
+      "description": "Parabola opening downward"
+    },
+    {
+      "name": "Shifted: y = x² - 2x + 1",
+      "values": [1, -2, 1],
+      "description": "Parabola with horizontal and vertical shift"
+    },
+    {
+      "name": "Wide: y = 0.5x² - 4",
+      "values": [0.5, 0, -4],
+      "description": "Wide parabola with vertical shift"
+    }
+  ],
+  "parameters": {
+    "a": {
+      "min": -5,
+      "max": 5,
+      "step": 0.1,
+      "color": "#ef4444",
+      "tooltip": "Controls parabola opening direction and width"
+    },
+    "b": {
+      "min": -10,
+      "max": 10,
+      "step": 0.1,
+      "color": "#22c55e",
+      "tooltip": "Controls horizontal shift and axis of symmetry"
+    },
+    "c": {
+      "min": -10,
+      "max": 10,
+      "step": 0.1,
+      "color": "#3b82f6",
+      "tooltip": "Controls vertical shift (y-intercept)"
+    }
+  },
+  "chart": {
+    "xRange": {
+      "min": -15,
+      "max": 15,
+      "step": 0.2
+    },
+    "colors": {
+      "parabola": "#3b82f6",
+      "vertex": "#8b5cf6",
+      "solutions": "#ef4444",
+      "grid": "#e5e7eb"
+    },
+    "options": {
+      "borderWidth": 3,
+      "pointRadius": {
+        "parabola": 0,
+        "vertex": 8,
+        "solutions": 6
+      },
+      "maxTicks": 15
+    }
+  },
+  "features": {
+    "darkMode": true,
+    "export": true,
+    "share": true,
+    "undo": true,
+    "tooltips": true,
+    "stepByStep": true,
+    "keyboardShortcuts": {
+      "undo": "Ctrl+Z",
+      "redo": "Ctrl+Y"
+    }
+  },
+  "ui": {
+    "buttons": {
+      "darkMode": "🌙",
+      "darkModeActive": "☀️",
+      "export": "📷",
+      "share": "🔗",
+      "shareSuccess": "✓",
+      "reset": "Reset"
+    },
+    "messages": {
+      "zeroParameter": "Parameter 'a' cannot be zero.",
+      "noSolutions": "No real solutions",
+      "oneSolution": "One solution",
+      "twoSolutions": "Two solutions"
+    }
+  }
+}
